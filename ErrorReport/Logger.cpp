@@ -12,6 +12,8 @@
 using std::string;
 using std::vector;
 
+static const int MAX_LEN = 1024;		//默认最大字节数
+
 namespace LOGGER
 {
 	CLogger::CLogger(const std::string strLogName, const std::string strLogPath, EnumLogLevel nLogLevel)
@@ -270,5 +272,128 @@ namespace LOGGER
 			va_end(marker); //重置变量参数  
 		}
 		return strResult;
+	}
+
+	//字符串转化相关函数
+	int UnicodeToAnsi(LPSTR szAnsi, LPCWSTR wstrUnicode)
+	{
+		DWORD dwMinSize = 0;
+		//转化后需要多少多字节来存储
+		dwMinSize = WideCharToMultiByte(CP_OEMCP, 0, wstrUnicode, -1, NULL, 0, NULL, FALSE);
+		if (0 == dwMinSize)
+		{
+			return 0;
+		}
+
+		WideCharToMultiByte(CP_OEMCP, 0, wstrUnicode, -1, szAnsi, dwMinSize, NULL, FALSE);
+
+		return dwMinSize;
+	}
+	int AnsiToUnicode(LPWSTR wstrUnicode, LPCSTR szAnsi)
+	{
+		DWORD dwMinSize = 0;
+		dwMinSize = MultiByteToWideChar(CP_ACP, 0, szAnsi, -1, NULL, 0);
+		if (0 == dwMinSize)
+		{
+			return 0;
+		}
+		MultiByteToWideChar(CP_ACP, 0, szAnsi, -1, wstrUnicode, dwMinSize);
+
+		return dwMinSize;
+	}
+
+	int UTF8ToUnicode(LPWSTR wstrUnicoe, LPCSTR szUTF8)
+	{
+		//转换后Unicode的长度  
+
+		DWORD dwMinSize = MultiByteToWideChar(CP_UTF8, 0, szUTF8, -1, NULL, 0);
+
+		if (0 != dwMinSize)
+		{
+			//转为Unicode  
+			dwMinSize = MultiByteToWideChar(CP_UTF8, 0, szUTF8, -1, wstrUnicoe, dwMinSize);
+
+			return dwMinSize;
+		}
+
+		return 0;
+	}
+
+	int UnicodeToUTF8(LPSTR szUTF8, LPCWSTR wszUnicode)
+	{
+		int dwMinSize = WideCharToMultiByte(CP_UTF8, 0, wszUnicode, -1, NULL, 0, NULL, NULL);
+		if (dwMinSize)
+		{
+			dwMinSize = WideCharToMultiByte(CP_UTF8, 0, wszUnicode, -1, szUTF8, dwMinSize, NULL, NULL);
+		}
+
+		return dwMinSize;
+	}
+
+
+	int UTF8ToAnsi(LPSTR szAnsi, LPCSTR szUTF8)
+	{
+		wchar_t szUnicode[1024] = L"";
+		UTF8ToUnicode(szUnicode, szUTF8);
+
+		return UnicodeToAnsi(szAnsi, szUnicode);
+	}
+
+	int AnsiToUTF8(LPSTR szUTF8, LPCSTR szAnsi)
+	{
+		wchar_t szUnicode[MAX_LEN] = L"";
+		AnsiToUnicode(szUnicode, szAnsi);
+
+		return UnicodeToUTF8(szUTF8, szUnicode);
+	}
+
+
+	std::string UnicodeToAnsi(const std::wstring wstrUnicode)
+	{
+		char szAnsi[MAX_LEN] = "";
+		UnicodeToAnsi(szAnsi, wstrUnicode.data());
+
+		return std::string(szAnsi);
+	}
+
+	std::wstring AnsiToUnicode(const std::string szAnsi)
+	{
+		wchar_t szUnicoe[MAX_LEN] = L"";
+		AnsiToUnicode(szUnicoe, szAnsi.data());
+
+		return std::wstring(szUnicoe);
+
+	}
+	std::wstring UTF8ToUnicode(const std::string szUTF8)
+	{
+		wchar_t szUnicode[MAX_LEN] = L"";
+		UTF8ToUnicode(szUnicode, szUTF8.data());
+
+		return std::wstring(szUnicode);
+	}
+
+	std::string UnicodeToUTF8(const std::wstring wszUnicode)
+	{
+		char szutf8[MAX_LEN] = "";
+		UnicodeToUTF8(szutf8, wszUnicode.data());
+
+		return std::string(szutf8);
+	}
+
+	std::string UTF8ToAnsi(const std::string szUTF8)
+	{
+		char szAnsi[MAX_LEN] = "";
+		UTF8ToAnsi(szAnsi, szUTF8.data());
+
+		return std::string(szAnsi);
+
+	}
+
+	std::string AnsiToUTF8(const std::string szAnsi)
+	{
+		char szUtf8[MAX_LEN] = "";
+		AnsiToUTF8(szUtf8, szAnsi.data());
+
+		return std::string(szUtf8);
 	}
 }

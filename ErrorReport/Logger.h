@@ -10,6 +10,23 @@
 
 namespace LOGGER
 {
+	//字符转化
+	//C风格字符串
+	int UnicodeToAnsi(LPSTR szAnsi, LPCWSTR wstrUnicode);
+	int AnsiToUnicode(LPWSTR wstrUnicode, LPCSTR szAnsi);
+	int UTF8ToUnicode(LPWSTR wstrUnicoe, LPCSTR szUTF8);
+	int UnicodeToUTF8(LPSTR szUTF8, LPCWSTR wszUnicode);
+	int UTF8ToAnsi(LPSTR szAnsi, LPCSTR szUTF8);
+	int AnsiToUTF8(LPSTR szUTF8, LPCSTR szAnsi);
+
+	//c++风格字符串
+	std::string		UnicodeToAnsi(const std::wstring wstrUnicode);
+	std::wstring	AnsiToUnicode(const std::string szAnsi);
+	std::wstring	UTF8ToUnicode(const std::string szUTF8);
+	std::string		UnicodeToUTF8(const std::wstring wszUnicode);
+	std::string		UTF8ToAnsi(const std::string szUTF8);
+	std::string		AnsiToUTF8(const std::string szAnsi);
+
 	//日志级别的提示信息  
 	static const std::string strFatalPrefix = "Fatal\t";
 	static const std::string strErrorPrefix = "Error\t";
