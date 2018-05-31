@@ -1,0 +1,44 @@
+﻿生成启动时间为 2014/12/15 17:47:25。
+     1>项目“D:\客户-运营-源码\2014-9-1-网狐正版\系统模块\服务器组件\内核引擎+源码\KernelEngine.vcxproj”在节点 2 上(rebuild 个目标)。
+     1>InitializeBuildStatus:
+         正在创建“Release_Unicode\内核引擎.unsuccessfulbuild”，因为已指定“AlwaysCreate”。
+       ClCompile:
+         d:\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oy- /D WIN32 /D _WINDOWS /D NDEBUG /D _AFXEXT /D KERNEL_ENGINE_DLL /D _UNICODE /D _VC80_UPGRADE=0x0710 /D _WINDLL /D _MBCS /D _AFXDLL /Gm- /EHsc /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release_Unicode\\" /Fd"Release_Unicode\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt KernelEngine.cpp AttemperEngine.cpp TimerEngine.cpp QueueService.cpp DataBase.cpp DataBaseAide.cpp TCPNetworkEngine.cpp TCPSocketService.cpp WEBSocketService.cpp TraceService.cpp AsynchronismEngine.cpp Stdafx.cpp
+         KernelEngine.cpp
+         AttemperEngine.cpp
+         TimerEngine.cpp
+     1>TimerEngine.cpp(88): error C2065: “DEBUG_GUARD”: 未声明的标识符
+     1>TimerEngine.cpp(159): error C2065: “DEBUG_GUARD”: 未声明的标识符
+     1>TimerEngine.cpp(262): error C2065: “DEBUG_GUARD”: 未声明的标识符
+         QueueService.cpp
+         DataBase.cpp
+     1>DataBase.cpp(614): warning C4244: “/=”: 从“double”转换到“__int64”，可能丢失数据
+         DataBaseAide.cpp
+         TCPNetworkEngine.cpp
+     1>TCPNetworkEngine.cpp(471): error C2039: “cbVersion”: 不是“TCP_Info”的成员
+                 d:\客户-运营-源码\2014-9-1-网狐正版\系统模块\全局定义\Packet.h(42) : 参见“TCP_Info”的声明
+     1>TCPNetworkEngine.cpp(471): error C2065: “SOCKET_TCP_VER”: 未声明的标识符
+     1>TCPNetworkEngine.cpp(570): error C2039: “cbVersion”: 不是“TCP_Info”的成员
+                 d:\客户-运营-源码\2014-9-1-网狐正版\系统模块\全局定义\Packet.h(42) : 参见“TCP_Info”的声明
+     1>TCPNetworkEngine.cpp(570): error C2065: “SOCKET_TCP_VER”: 未声明的标识符
+         TCPSocketService.cpp
+     1>TCPSocketService.cpp(453): error C2039: “cbVersion”: 不是“TCP_Info”的成员
+                 d:\客户-运营-源码\2014-9-1-网狐正版\系统模块\全局定义\Packet.h(42) : 参见“TCP_Info”的声明
+     1>TCPSocketService.cpp(453): error C2065: “SOCKET_TCP_VER”: 未声明的标识符
+     1>TCPSocketService.cpp(615): error C2039: “cbVersion”: 不是“TCP_Info”的成员
+                 d:\客户-运营-源码\2014-9-1-网狐正版\系统模块\全局定义\Packet.h(42) : 参见“TCP_Info”的声明
+     1>TCPSocketService.cpp(615): error C2065: “SOCKET_TCP_VER”: 未声明的标识符
+         WEBSocketService.cpp
+         TraceService.cpp
+     1>TraceService.cpp(165): warning C4996: '_snwprintf': This function or variable may be unsafe. Consider using _snwprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 d:\Microsoft Visual Studio 10.0\VC\include\wchar.h(707) : 参见“_snwprintf”的声明
+     1>TraceService.cpp(169): warning C4996: '_snwprintf': This function or variable may be unsafe. Consider using _snwprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 d:\Microsoft Visual Studio 10.0\VC\include\wchar.h(707) : 参见“_snwprintf”的声明
+         AsynchronismEngine.cpp
+         Stdafx.cpp
+         正在生成代码...
+     1>已完成生成项目“D:\客户-运营-源码\2014-9-1-网狐正版\系统模块\服务器组件\内核引擎+源码\KernelEngine.vcxproj”(rebuild 个目标)的操作 - 失败。
+
+生成失败。
+
+已用时间 00:00:11.81
