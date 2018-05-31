@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Logger.h"
 #include <time.h>  
 #include <stdarg.h>  
@@ -8,8 +7,10 @@
 //#include <windows.h>
 
 #pragma comment(lib,"Dbghelp.lib")  
+#pragma warning(disable:4996)
 
 using std::string;
+using std::wstring;
 using std::vector;
 
 static const int MAX_LEN = 1024;		//默认最大字节数
@@ -38,15 +39,18 @@ namespace LOGGER
 		{
 			time_t curTime;
 			time(&curTime);
-			tm tm1;
-			localtime_s(&tm1, &curTime);
+			tm *tm1 = localtime(&curTime);
 			//日志的名称如：201601012130.log  
-			m_strLogName = FormatString("%04d%02d%02d_%02d%02d%02d.log", tm1.tm_year + 1900, tm1.tm_mon + 1, tm1.tm_mday, tm1.tm_hour, tm1.tm_min, tm1.tm_sec);
+			m_strLogName = FormatString("%04d%02d%02d_%02d%02d%02d.log", tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday, 
+				tm1->tm_hour, tm1->tm_min, tm1->tm_sec);
 		}
 		m_strLogFilePath = m_strLogPath.append(m_strLogName);
 
 		//以追加的方式打开文件流  
-		fopen_s(&m_pFileStream, m_strLogFilePath.c_str(), "a+");
+		m_pFileStream = fopen(m_strLogFilePath.c_str(), "a+");
+
+		m_oldLocale = _strdup(setlocale(LC_CTYPE, NULL));
+		setlocale(LC_CTYPE, "chs");
 
 		InitializeCriticalSection(&m_cs);
 	}
@@ -57,6 +61,7 @@ namespace LOGGER
 	{
 		//释放临界区  
 		DeleteCriticalSection(&m_cs);
+		setlocale(LC_CTYPE, m_oldLocale.c_str());
 		//关闭文件流  
 		if (m_pFileStream)
 		{
@@ -75,7 +80,7 @@ namespace LOGGER
 	void CLogger::TraceFatal(const char *lpcszFormat, ...)
 	{
 		//判断当前的写日志级别  
-		if (EnumLogLevel::LogLevel_Fatal > m_nLogLevel)
+		if (LogLevel_Fatal > m_nLogLevel)
 			return;
 		string strResult;
 		if (NULL != lpcszFormat)
@@ -84,7 +89,8 @@ namespace LOGGER
 			va_start(marker, lpcszFormat); //初始化变量参数  
 			size_t nLength = _vscprintf(lpcszFormat, marker) + 1; //获取格式化字符串长度  
 			std::vector<char> vBuffer(nLength, '\0'); //创建用于存储格式化字符串的字符数组  
-			int nWritten = _vsnprintf_s(&vBuffer[0], vBuffer.size(), nLength, lpcszFormat, marker);
+		
+			int nWritten = _vsnprintf(&vBuffer[0], nLength, lpcszFormat, marker);
 			if (nWritten > 0)
 			{
 				strResult = &vBuffer[0];
@@ -102,11 +108,43 @@ namespace LOGGER
 		Trace(strLog);
 	}
 
+	void CLogger::TraceFatal(const wchar_t *lpcszFormat, ...)
+	{
+		//判断当前的写日志级别  
+		if (LogLevel_Fatal > m_nLogLevel)
+			return;
+		wstring strResult;
+		if (NULL != lpcszFormat)
+		{
+			va_list marker = NULL;
+			va_start(marker, lpcszFormat); //初始化变量参数  
+			size_t nLength = _vscwprintf(lpcszFormat, marker) + 1; //获取格式化字符串长度  
+			std::vector<wchar_t> vBuffer(nLength, L'\0'); //创建用于存储格式化字符串的字符数组  
+
+			int nWritten = _vsnwprintf(&vBuffer[0], nLength, lpcszFormat, marker);
+			if (nWritten > 0)
+			{
+				strResult = &vBuffer[0];
+			}
+			va_end(marker); //重置变量参数  
+		}
+		if (strResult.empty())
+		{
+			return;
+		}
+		wstring strLog = AnsiToUnicode(strFatalPrefix);
+		strLog.append(AnsiToUnicode(GetTime())).append(strResult);
+
+		//写日志文件  
+		Trace(strLog);
+	}
+
+
 	//写错误信息  
 	void CLogger::TraceError(const char *lpcszFormat, ...)
 	{
 		//判断当前的写日志级别  
-		if (EnumLogLevel::LogLevel_Error > m_nLogLevel)
+		if (LogLevel_Error > m_nLogLevel)
 			return;
 		string strResult;
 		if (NULL != lpcszFormat)
@@ -115,7 +153,7 @@ namespace LOGGER
 			va_start(marker, lpcszFormat); //初始化变量参数  
 			size_t nLength = _vscprintf(lpcszFormat, marker) + 1; //获取格式化字符串长度  
 			std::vector<char> vBuffer(nLength, '\0'); //创建用于存储格式化字符串的字符数组  
-			int nWritten = _vsnprintf_s(&vBuffer[0], vBuffer.size(), nLength, lpcszFormat, marker);
+			int nWritten = _vsnprintf(&vBuffer[0], nLength, lpcszFormat, marker);
 			if (nWritten > 0)
 			{
 				strResult = &vBuffer[0];
@@ -133,11 +171,41 @@ namespace LOGGER
 		Trace(strLog);
 	}
 
+	void CLogger::TraceError(const wchar_t *lpcszFormat, ...)
+	{
+		//判断当前的写日志级别  
+		if (LogLevel_Error > m_nLogLevel)
+			return;
+		wstring strResult;
+		if (NULL != lpcszFormat)
+		{
+			va_list marker = NULL;
+			va_start(marker, lpcszFormat); //初始化变量参数  
+			size_t nLength = _vscwprintf(lpcszFormat, marker) + 1; //获取格式化字符串长度  
+			std::vector<wchar_t> vBuffer(nLength, L'\0'); //创建用于存储格式化字符串的字符数组  
+			int nWritten = _vsnwprintf(&vBuffer[0], nLength, lpcszFormat, marker);
+			if (nWritten > 0)
+			{
+				strResult = &vBuffer[0];
+			}
+			va_end(marker); //重置变量参数  
+		}
+		if (strResult.empty())
+		{
+			return;
+		}
+		wstring strLog = AnsiToUnicode(strErrorPrefix);
+		strLog.append(AnsiToUnicode(GetTime())).append(strResult);
+
+		//写日志文件  
+		Trace(strLog);
+	}
+
 	//写警告信息  
 	void CLogger::TraceWarning(const char *lpcszFormat, ...)
 	{
 		//判断当前的写日志级别  
-		if (EnumLogLevel::LogLevel_Warning > m_nLogLevel)
+		if (LogLevel_Warning > m_nLogLevel)
 			return;
 		string strResult;
 		if (NULL != lpcszFormat)
@@ -146,7 +214,7 @@ namespace LOGGER
 			va_start(marker, lpcszFormat); //初始化变量参数  
 			size_t nLength = _vscprintf(lpcszFormat, marker) + 1; //获取格式化字符串长度  
 			std::vector<char> vBuffer(nLength, '\0'); //创建用于存储格式化字符串的字符数组  
-			int nWritten = _vsnprintf_s(&vBuffer[0], vBuffer.size(), nLength, lpcszFormat, marker);
+			int nWritten = _vsnprintf(&vBuffer[0], nLength, lpcszFormat, marker);
 			if (nWritten > 0)
 			{
 				strResult = &vBuffer[0];
@@ -164,12 +232,43 @@ namespace LOGGER
 		Trace(strLog);
 	}
 
+	void CLogger::TraceWarning(const wchar_t *lpcszFormat, ...)
+	{
+		//判断当前的写日志级别  
+		if (LogLevel_Warning > m_nLogLevel)
+			return;
+		wstring strResult;
+		if (NULL != lpcszFormat)
+		{
+			va_list marker = NULL;
+			va_start(marker, lpcszFormat); //初始化变量参数  
+			size_t nLength = _vscwprintf(lpcszFormat, marker) + 1; //获取格式化字符串长度  
+			std::vector<wchar_t> vBuffer(nLength, L'\0'); //创建用于存储格式化字符串的字符数组  
+			int nWritten = _vsnwprintf(&vBuffer[0], nLength, lpcszFormat, marker);
+			if (nWritten > 0)
+			{
+				strResult = &vBuffer[0];
+			}
+			va_end(marker); //重置变量参数  
+		}
+		if (strResult.empty())
+		{
+			return;
+		}
+		wstring strLog = AnsiToUnicode(strWarningPrefix);
+		strLog.append(AnsiToUnicode(GetTime())).append(strResult);
+
+		//写日志文件  
+		Trace(strLog);
+
+	}
+
 
 	//写一般信息  
 	void CLogger::TraceInfo(const char *lpcszFormat, ...)
 	{
 		//判断当前的写日志级别  
-		if (EnumLogLevel::LogLevel_Info > m_nLogLevel)
+		if (LogLevel_Info > m_nLogLevel)
 			return;
 		string strResult;
 		if (NULL != lpcszFormat)
@@ -178,7 +277,7 @@ namespace LOGGER
 			va_start(marker, lpcszFormat); //初始化变量参数  
 			size_t nLength = _vscprintf(lpcszFormat, marker) + 1; //获取格式化字符串长度  
 			std::vector<char> vBuffer(nLength, '\0'); //创建用于存储格式化字符串的字符数组  
-			int nWritten = _vsnprintf_s(&vBuffer[0], vBuffer.size(), nLength, lpcszFormat, marker);
+			int nWritten = _vsnprintf(&vBuffer[0], nLength, lpcszFormat, marker);
 			if (nWritten > 0)
 			{
 				strResult = &vBuffer[0];
@@ -196,15 +295,46 @@ namespace LOGGER
 		Trace(strLog);
 	}
 
+	void CLogger::TraceInfo(const wchar_t *lpcszFormat, ...)
+	{
+		//判断当前的写日志级别  
+		if (LogLevel_Info > m_nLogLevel)
+			return;
+		wstring strResult;
+		if (NULL != lpcszFormat)
+		{
+			va_list marker = NULL;
+			va_start(marker, lpcszFormat); //初始化变量参数  
+			size_t nLength = _vscwprintf(lpcszFormat, marker) + 1; //获取格式化字符串长度  
+			std::vector<wchar_t> vBuffer(nLength, L'\0'); //创建用于存储格式化字符串的字符数组  
+			int nWritten = _vsnwprintf(&vBuffer[0], nLength, lpcszFormat, marker);
+			if (nWritten > 0)
+			{
+				strResult = &vBuffer[0];
+			}
+			va_end(marker); //重置变量参数  
+		}
+		if (strResult.empty())
+		{
+			return;
+		}
+		wstring strLog = AnsiToUnicode(strInfoPrefix);
+		strLog.append(AnsiToUnicode(GetTime())).append(strResult);
+
+		//写日志文件  
+		Trace(strLog);
+
+	}
+
 	//获取系统当前时间  
 	string CLogger::GetTime()
 	{
 		time_t curTime;
 		time(&curTime);
-		tm tm1;
-		localtime_s(&tm1, &curTime);
+		tm *tm1 = localtime(&curTime);
 		//2016-01-01 21:30:00  
-		string strTime = FormatString("[%04d-%02d-%02d %02d:%02d:%02d] ", tm1.tm_year + 1900, tm1.tm_mon + 1, tm1.tm_mday, tm1.tm_hour, tm1.tm_min, tm1.tm_sec);
+		string strTime = FormatString("[%04d-%02d-%02d %02d:%02d:%02d] ", tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday, 
+			tm1->tm_hour, tm1->tm_min, tm1->tm_sec);
 
 		return strTime;
 	}
@@ -225,7 +355,7 @@ namespace LOGGER
 			//若文件流没有打开，则重新打开  
 			if (NULL == m_pFileStream)
 			{
-				fopen_s(&m_pFileStream, m_strLogFilePath.c_str(), "a+");
+				m_pFileStream = fopen(m_strLogFilePath.c_str(), "a+");
 				if (!m_pFileStream)
 				{
 					return;
@@ -244,11 +374,39 @@ namespace LOGGER
 		}
 	}
 
+	void CLogger::Trace(const std::wstring& strLog)
+	{
+		try
+		{
+			//进入临界区  
+			EnterCriticalSection(&m_cs);
+			//若文件流没有打开，则重新打开  
+			if (NULL == m_pFileStream)
+			{
+				m_pFileStream = fopen(m_strLogFilePath.c_str(), "a+");
+				if (!m_pFileStream)
+				{
+					return;
+				}
+			}
+			//写日志信息到文件流  
+			fwprintf(m_pFileStream, L"%s\n", strLog.c_str());
+			fflush(m_pFileStream);
+			//离开临界区  
+			LeaveCriticalSection(&m_cs);
+		}
+		//若发生异常，则先离开临界区，防止死锁  
+		catch (...)
+		{
+			LeaveCriticalSection(&m_cs);
+		}
+	}
+
 	string CLogger::GetAppPathA()
 	{
 		char szFilePath[MAX_PATH] = { 0 }, szDrive[MAX_PATH] = { 0 }, szDir[MAX_PATH] = { 0 }, szFileName[MAX_PATH] = { 0 }, szExt[MAX_PATH] = { 0 };
 		GetModuleFileNameA(NULL, szFilePath, sizeof(szFilePath));
-		_splitpath_s(szFilePath, szDrive, szDir, szFileName, szExt);
+		_splitpath(szFilePath, szDrive, szDir, szFileName, szExt);
 
 		string str(szDrive);
 		str.append(szDir);
@@ -264,13 +422,33 @@ namespace LOGGER
 			va_start(marker, lpcszFormat); //初始化变量参数  
 			size_t nLength = _vscprintf(lpcszFormat, marker) + 1; //获取格式化字符串长度  
 			std::vector<char> vBuffer(nLength, '\0'); //创建用于存储格式化字符串的字符数组  
-			int nWritten = _vsnprintf_s(&vBuffer[0], vBuffer.size(), nLength, lpcszFormat, marker);
+			int nWritten = _vsnprintf(&vBuffer[0], nLength, lpcszFormat, marker);
 			if (nWritten > 0)
 			{
 				strResult = &vBuffer[0];
 			}
 			va_end(marker); //重置变量参数  
 		}
+		return strResult;
+	}
+
+	std::wstring CLogger::FormatString(const wchar_t *lpcszFormat, ...)
+	{
+		wstring strResult;
+		if (NULL != lpcszFormat)
+		{
+			va_list marker = NULL;
+			va_start(marker, lpcszFormat);
+			size_t nLength = _vscwprintf(lpcszFormat, marker);
+			std::vector<wchar_t> vBuffer(nLength, '\0');
+			int nWritten = _vsnwprintf(&vBuffer[0], nLength, lpcszFormat, marker);
+			if (nWritten > 0)
+			{
+				strResult = &vBuffer[0];
+			}
+			va_end(marker);
+		}
+
 		return strResult;
 	}
 

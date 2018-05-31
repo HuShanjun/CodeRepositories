@@ -6,7 +6,7 @@
 
 #include <Windows.h>  
 #include <stdio.h>  
-#include <string>  
+#include <string> 
 
 namespace LOGGER
 {
@@ -49,27 +49,35 @@ namespace LOGGER
 		//nLogLevel：日志记录的等级，可空  
 		//strLogPath：日志目录，可空  
 		//strLogName：日志名称，可空  
-		CLogger(const std::string strLogName = "", const std::string strLogPath = "", EnumLogLevel nLogLevel = EnumLogLevel::LogLevel_Info);
+		CLogger(const std::string strLogName = "", const std::string strLogPath = "", EnumLogLevel nLogLevel = LogLevel_Info);
 		//析构函数  
 		virtual ~CLogger();
 	public:
 		//写严重错误信息  
 		void TraceFatal(const char *lpcszFormat, ...);
+		void TraceFatal(const wchar_t *lpcszFormat, ...);
 		//写错误信息  
 		void TraceError(const char *lpcszFormat, ...);
+		void TraceError(const wchar_t *lpcszFormat, ...);
 		//写警告信息  
 		void TraceWarning(const char *lpcszFormat, ...);
+		void TraceWarning(const wchar_t *lpcszFormat, ...);
 		//写提示信息  
 		void TraceInfo(const char *lpcszFormat, ...);
+		void TraceInfo(const wchar_t *lpcszFormat, ...);
+		
+
 		//改变写日志级别  
 		void ChangeLogLevel(EnumLogLevel nLevel);
 		//获取程序运行路径  
 		static std::string GetAppPathA();
 		//格式化字符串  
 		static std::string FormatString(const char *lpcszFormat, ...);
+		static std::wstring FormatString(const wchar_t *lpcszFormat, ...);
 	private:
 		//写文件操作  
 		void Trace(const std::string &strLog);
+		void Trace(const std::wstring& strLog);
 		//获取当前系统时间  
 		std::string GetTime();
 		//文件全路径得到文件名  
@@ -86,6 +94,8 @@ namespace LOGGER
 		std::string m_strLogName;
 		//日志文件全路径  
 		std::string m_strLogFilePath;
+		//国际化
+		std::string m_oldLocale;
 		//线程同步的临界区变量  
 		CRITICAL_SECTION m_cs;
 	};
